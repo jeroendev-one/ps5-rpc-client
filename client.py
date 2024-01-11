@@ -6,6 +6,8 @@ import json
 import requests
 import configparser
 import sys
+import select
+import errno
 from time import mktime
 from json.decoder import JSONDecodeError
 
@@ -136,33 +138,38 @@ game_info = load_game_info()
 
 start_time = mktime(time.localtime())
 
+# Set the socket to non-blocking
+ps5_socket.setblocking(0)
+
 # Main loop
 while True:
     try:
-        
-        data = ps5_socket.recv(1024).decode("utf-8").strip()
-        normalized_data = data.rstrip('\n')
+        # Check if there is data to be read
+        ready_to_read, _, _ = select.select([ps5_socket.fileno()], [], [], 30)
 
-        print(f"[{get_time()}] Data received: {data}\n")
+        if ready_to_read:
+            data = ps5_socket.recv(1024).decode("utf-8").strip()
+            normalized_data = data.rstrip('\n')
 
-        if normalized_data != previous_data:  # Check for change in game status
-            previous_data = normalized_data
+            print(f"[{get_time()}] Data received: {data}\n")
 
-            if not "No game running" in normalized_data:
-                if normalized_data in game_info:
-                    print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
-                    gameName = game_info[normalized_data]['gameName']
-                    gameImage = game_info[normalized_data]['gameImage']
+            if normalized_data != previous_data:
+                previous_data = normalized_data
 
-                else:
-                    gameName, gameImage = get_game_info(data, normalized_data)
+                if not "No game running" in normalized_data:
+                    if normalized_data in game_info:
+                        print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
+                        gameName = game_info[normalized_data]['gameName']
+                        gameImage = game_info[normalized_data]['gameImage']
+                    else:
+                        gameName, gameImage = get_game_info(data, normalized_data)
 
-                    if gameName is not None and gameImage is not None:
-                        game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage}
-                        with open('game_info.json', 'w') as file:
-                            json.dump(game_info, file, indent=4)
+                        if gameName is not None and gameImage is not None:
+                            game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage}
+                            with open('game_info.json', 'w') as file:
+                                json.dump(game_info, file, indent=4)
 
-                activity = {
+                    activity = {
                         "details": gameName,
                         "timestamps": {"start": mktime(time.localtime())},
                         "assets": {
@@ -170,24 +177,42 @@ while True:
                         }
                     }
 
-                rpc_obj.set_activity(activity)
-                print(f"[{get_time()}] Updated activity")
-            else:
-                activity = {
-                    "details": "Idle",
-                    "timestamps": {"start": mktime(time.localtime())},
-                    "assets": {
-                        "large_image": fallback_image
+                    rpc_obj.set_activity(activity)
+                    print(f"[{get_time()}] Updated activity")
+                else:
+                    activity = {
+                        "details": "Idle",
+                        "timestamps": {"start": mktime(time.localtime())},
+                        "assets": {
+                            "large_image": fallback_image
+                        }
                     }
-                }
 
-                rpc_obj.set_activity(activity)
-                print(f"[{get_time()}] Updated activity for 'No game running'")
+                    rpc_obj.set_activity(activity)
+                    print(f"[{get_time()}] Updated activity for 'No game running'")
+            else:
+                print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
         else:
-            print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
+            print(f"[{get_time()}] No data received in the last 30 seconds. Reconnecting...\n")
+            ps5_socket.close()
+            ps5_socket = None
+
+            # Outside of the 'while True' loop, attempt to reconnect
+            while ps5_socket is None:
+                ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
+                if ps5_socket is None:
+                    print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.")
+                    time.sleep(5)
 
     except socket.error as e:
-        print(f"Socket error: {e}")
+        if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+            # No data available, continue the loop
+            continue
+        elif e.errno == errno.ECONNRESET or e.errno == errno.ENOTCONN:
+            print(f"Connection reset by peer or not connected: {e}")
+        else:
+            print(f"Socket error: {e}")
+
         ps5_socket.close()
         ps5_socket = None
 
