@@ -41,7 +41,7 @@ jobs:
       -
         name: Make release zips
         run: |
-          Compress-Archive -Path ".\discord-rpc-client.exe" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-exe-${{ github.ref_name }}.zip
+          Compress-Archive -Path "dist\discord-rpc-client.exe" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-exe-${{ github.ref_name }}.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@main
