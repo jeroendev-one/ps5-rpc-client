@@ -29,9 +29,12 @@ jobs:
       -
         name: Install Python packages
         run: pip install -r requirements.txt pyinstaller pyinstaller-versionfile 
-#      -
-#        name: Create Pyinstaller version file
-#        run: create-version-file metadata.yml --outfile file_version_info.txt --version "${{ github.ref_name }}".Replace("v", "")
+
+      - 
+        name: Set commit version
+        run: |
+          echo "commit_ver=1.$(git rev-list HEAD --count)" >> $GITHUB_ENV
+          echo "commit_hash=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_ENV
       -
         name: Build executable
         run: pyinstaller --noconfirm --clean --onefile --console --name discord-rpc-client --distpath .\ client.py
@@ -39,13 +42,9 @@ jobs:
         name: Make release zips
         run: |
           Compress-Archive -Path ".\discord-rpc-client.exe" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-exe-${{ github.ref_name }}.zip
-          Compress-Archive -Path ".\client.py" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-py-${{ github.ref_name }}.zip
       -
-        name: Create release
-        uses: ncipollo/release-action@v1
+        name: Upload artifacts
+        uses: actions/upload-artifact@main
         with:
-          artifactErrorsFailBuild: true
-          artifacts: |
-            discord-rpc-client-exe-${{ github.ref_name }}.zip
-            discord-rpc-client-py-${{ github.ref_name }}.zip
-          draft: true
+          name: discord-rpc_${{ env.commit_ver }}-${{ env.commit_hash }}
+          path: .
