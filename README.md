@@ -1,11 +1,14 @@
 # PS5-RPC-Client
+![Rich Presenc example]](assets/discord_example.png)
 
 ## What is this?
-This is an client which will update your Discord status with the game you're playing on your jailbroken PS5. 
+This is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. 
 
 It requires [etaHEN >= 1.4b](https://github.com/LightningMods/etaHEN) to be running and have the following entry enabled in the `/data/etaHEN/config.ini`:
-`discord_rpc=1`
-
+```ini
+[Settings]
+discord_rpc=1
+```
 Advised to have an static IP for your PS5. 
 
 ## Setting up Discord
