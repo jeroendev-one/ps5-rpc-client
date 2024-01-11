@@ -29,7 +29,7 @@ jobs:
       -
         name: Install Python packages
         run: pip install -r requirements.txt pyinstaller pyinstaller-versionfile 
-      -
+#      -
 #        name: Create Pyinstaller version file
 #        run: create-version-file metadata.yml --outfile file_version_info.txt --version "${{ github.ref_name }}".Replace("v", "")
       -
