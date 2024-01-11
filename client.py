@@ -14,8 +14,8 @@ from json.decoder import JSONDecodeError
 # Default variables
 fallback_image = 'https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp'
 PS5_RPC_PORT = 8000
-DISCORD_CLIENT_ID = None  # Initialize outside the try block
-PS5_IP = None  # Initialize outside the try block
+DISCORD_CLIENT_ID = None
+PS5_IP = None
 
 # Load config from config.ini, if not present ask for input and create the file
 def get_ini_config():
@@ -28,8 +28,6 @@ def get_ini_config():
                 print("Error: invalid config.ini file!")
                 sys.exit(1)
             else:
-                print(config['settings']['client_id'])
-                print(config['settings']['ps5_ip'])
                 DISCORD_CLIENT_ID = config['settings']['client_id']
                 PS5_IP = config['settings']['ps5_ip']
                 
@@ -112,6 +110,19 @@ def connect_to_server(ip, port):
         print(f"[{get_time()}] Error connecting to server: {e}")
         return None
 
+# Function to set Discord activity
+def set_discord_activity(rpc_obj, gameName, gameImage, is_idle=False):
+    activity = {
+        "details": gameName if gameName else "Idle",
+        "timestamps": {"start": mktime(time.localtime())},
+        "assets": {
+            "large_image": gameImage if gameImage else fallback_image
+        }
+    }
+
+    rpc_obj.set_activity(activity)
+    print(f"[{get_time()}] Updated activity{' for ' + gameName if gameName else ''}")
+
 # Initialize Discord IPC client
 print(f"[{get_time()}] PS5 RPC Discord client started --\n")
 while True:
@@ -169,27 +180,9 @@ while True:
                             with open('game_info.json', 'w') as file:
                                 json.dump(game_info, file, indent=4)
 
-                    activity = {
-                        "details": gameName,
-                        "timestamps": {"start": mktime(time.localtime())},
-                        "assets": {
-                            "large_image": gameImage if gameImage else fallback_image
-                        }
-                    }
-
-                    rpc_obj.set_activity(activity)
-                    print(f"[{get_time()}] Updated activity")
+                    set_discord_activity(rpc_obj, gameName, gameImage)
                 else:
-                    activity = {
-                        "details": "Idle",
-                        "timestamps": {"start": mktime(time.localtime())},
-                        "assets": {
-                            "large_image": fallback_image
-                        }
-                    }
-
-                    rpc_obj.set_activity(activity)
-                    print(f"[{get_time()}] Updated activity for 'No game running'")
+                    set_discord_activity(rpc_obj, None, None, is_idle=True)
             else:
                 print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
         else:
@@ -201,7 +194,7 @@ while True:
             while ps5_socket is None:
                 ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
                 if ps5_socket is None:
-                    print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.")
+                    print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.\n")
                     time.sleep(5)
 
     except socket.error as e:

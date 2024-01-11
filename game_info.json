@@ -2,5 +2,9 @@
     "ITEM00001": {
         "gameName": "Itemzflow Game Manager",
         "gameImage": "https://raw.githubusercontent.com/jeroendev-one/ps5-rpc-client/master/assets/ITEM00001.png?raw=true"
+    },
+    "CUSA40325": {
+        "gameName": "EA SPORTS FC 24",
+        "gameImage": "https://cdn.orbispatches.com/titles/CUSA40325_39baf49b907d59084ad939f057598fc4a7068db22282afe9bef0f0011be246bd/icon0.webp"
     }
 }
