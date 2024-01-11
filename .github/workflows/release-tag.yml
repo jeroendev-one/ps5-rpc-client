@@ -1,0 +1,51 @@
+---
+name: release-tag
+
+on:
+  push:
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      -
+        name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      -
+        name: Install Python packages
+        run: pip install -r requirements.txt pyinstaller pyinstaller-versionfile 
+      -
+        name: Create Pyinstaller version file
+        run: create-version-file metadata.yml --outfile file_version_info.txt --version "${{ github.ref_name }}".Replace("v", "")
+      -
+        name: Build executable
+        run: pyinstaller --noconfirm --clean --onefile --console --add-data game_info.json:. --name discord-rpc-client --version-file file_version_info.txt --distpath .\ client.py
+      -
+        name: Make release zips
+        run: |
+          Compress-Archive -Path ".\discord-rpc-client.exe" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-exe-${{ github.ref_name }}.zip
+          Compress-Archive -Path ".\client.py" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-py-${{ github.ref_name }}.zip
+      -
+        name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifactErrorsFailBuild: true
+          artifacts: |
+            discord-rpc-client-exe-${{ github.ref_name }}.zip
+            discord-rpc-client-py-${{ github.ref_name }}.zip
+          draft: true
