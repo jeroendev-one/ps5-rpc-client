@@ -1,6 +1,7 @@
 # PS5 Discord Rich Presence client
 
-![Rich Presenc example](assets/discord_example.png)
+![Rich Presenc example game](assets/discord_example_game.png)
+![Rich Presenc example idle](assets/discord_example_idle.png)
 
 ## What is this?
 This is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. 
