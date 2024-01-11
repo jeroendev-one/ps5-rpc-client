@@ -4,16 +4,54 @@ import socket
 import os
 import json
 import requests
+import configparser
+import sys
 from time import mktime
 from json.decoder import JSONDecodeError
 
 # Default variables
 fallback_image = 'https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp'
 PS5_RPC_PORT = 8000
+DISCORD_CLIENT_ID = None  # Initialize outside the try block
+PS5_IP = None  # Initialize outside the try block
 
-# User specific variabls
-client_id = os.getenv('DISCORD_CLIENT_ID')  # Your application's client ID as a string.
-PS5_IP = os.getenv('PS5_IP')  # Replace with your PS5's IP address. Be sure you make it static
+# Load config from config.ini, if not present ask for input and create the file
+def get_ini_config():
+    config = configparser.ConfigParser()
+
+    try:
+        with open('config.ini') as f:
+            config.read_file(f)
+            if not config.has_section('settings'):
+                print("Error: invalid config.ini file!")
+                sys.exit(1)
+            else:
+                print(config['settings']['client_id'])
+                print(config['settings']['ps5_ip'])
+                DISCORD_CLIENT_ID = config['settings']['client_id']
+                PS5_IP = config['settings']['ps5_ip']
+                
+    except FileNotFoundError:
+        print("First setup detected!")
+        DISCORD_CLIENT_ID = input("Enter Discord Application ID: ")
+        while not DISCORD_CLIENT_ID.strip():
+            print("Please enter a non-empty value.")
+            DISCORD_CLIENT_ID = input("Enter Discord Application ID: ")
+
+        PS5_IP = input("Enter PS5 IP address: ")
+        while not PS5_IP.strip():
+            print("Please enter a non-empty value.")
+            PS5_IP = input("Enter PS5 IP address: ")
+
+        config['settings'] = {'client_id': DISCORD_CLIENT_ID,
+                             'ps5_ip': PS5_IP}
+        with open('config.ini', 'w') as f:
+            config.write(f)
+
+    return DISCORD_CLIENT_ID, PS5_IP
+
+# Initialize INI config parsing
+DISCORD_CLIENT_ID, PS5_IP = get_ini_config()
 
 # Function to get formatted timestamp
 def get_time():
@@ -76,7 +114,7 @@ def connect_to_server(ip, port):
 print(f"[{get_time()}] PS5 RPC Discord client started --\n")
 while True:
     try:
-        rpc_obj = rpc.DiscordIpcClient.for_platform(client_id)
+        rpc_obj = rpc.DiscordIpcClient.for_platform(DISCORD_CLIENT_ID)
         print(f"[{get_time()}] RPC connection to Discord successful.\n")
         break
     except Exception as e:

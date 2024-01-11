@@ -10,7 +10,8 @@ It requires [etaHEN >= 1.4b](https://github.com/LightningMods/etaHEN) to be runn
 [Settings]
 discord_rpc=1
 ```
-Advised to have an static IP for your PS5. 
+Advised to have an static IP for your PS5.
+
 ## Getting started
 ## 1. Setting up Discord
 1. Go to the [Discord Developers](https://discord.com/developers) page.
@@ -31,7 +32,7 @@ Advised to have an static IP for your PS5.
 1. Unzip the release zip file
 1. Run the exe file, profit!
 
-## Linux
+## Linux / MacOS
 1. Clone this repo
 1. Install dependencies with `pip install -r requirements.txt`
 1. Set the environment variables:
