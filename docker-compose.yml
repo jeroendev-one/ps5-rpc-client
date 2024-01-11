@@ -1,0 +1,16 @@
+---
+version: "3.7"
+
+services:
+
+  ps5-rpc-client:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: ps5-rpc-client
+    container_name: ps5-rpc-client
+    restart: unless-stopped
+    volumes:
+     - /tmp/.X11-unix:/tmp/.X11-unix
+     - $HOME/.Xauthority:/root/.Xauthority
+     - ${XDG_RUNTIME_DIR}/discord-ipc-0:/tmp/discord-ipc-0
