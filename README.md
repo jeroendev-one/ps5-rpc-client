@@ -21,6 +21,7 @@ Advised to have an static IP for your PS5.
 1. Select the application and copy the value named 'Application ID' and note it down.
 
 ## 2. Running the client
+The client will ask for the Discord Application ID and PS5 IP address upon first startup. It will write those values to a `config.ini`
 
 ### Windows
 1. Download the latest exe release from the [releases](https://github.com/jeroendev-one/ps5-rpc-client/releases) page.
