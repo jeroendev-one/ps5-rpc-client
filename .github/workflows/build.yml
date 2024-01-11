@@ -37,7 +37,7 @@ jobs:
           echo "commit_hash=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_ENV
       -
         name: Build executable
-        run: pyinstaller --noconfirm --clean --onefile --console --name discord-rpc-client --distpath .\ client.py
+        run: pyinstaller --noconfirm --clean --onefile --console --name discord-rpc-client client.py
       -
         name: Make release zips
         run: |
@@ -47,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: discord-rpc_${{ env.commit_ver }}-${{ env.commit_hash }}
-          path: .
+          path: dist
