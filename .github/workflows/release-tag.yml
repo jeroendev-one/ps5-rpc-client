@@ -1,5 +1,5 @@
 ---
-name: release-tag
+name: build-latest
 
 on:
   push:
@@ -30,11 +30,11 @@ jobs:
         name: Install Python packages
         run: pip install -r requirements.txt pyinstaller pyinstaller-versionfile 
       -
-        name: Create Pyinstaller version file
-        run: create-version-file metadata.yml --outfile file_version_info.txt --version "${{ github.ref_name }}".Replace("v", "")
+#        name: Create Pyinstaller version file
+#        run: create-version-file metadata.yml --outfile file_version_info.txt --version "${{ github.ref_name }}".Replace("v", "")
       -
         name: Build executable
-        run: pyinstaller --noconfirm --clean --onefile --console --add-data game_info.json:. --name discord-rpc-client --version-file file_version_info.txt --distpath .\ client.py
+        run: pyinstaller --noconfirm --clean --onefile --console --name discord-rpc-client --distpath .\ client.py
       -
         name: Make release zips
         run: |
