@@ -5,7 +5,7 @@
 ![Rich Presenc example idle](assets/discord_example_idle.png)
 
 ## What is it?
-PS5 RPC Client is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. 
+PS5 RPC Client is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. *Requires Discord Desktop App*
 
 It requires [etaHEN >= 1.4b](https://github.com/LightningMods/etaHEN) to be running and have the following entry enabled in the `/data/etaHEN/config.ini`:
 ```ini
@@ -31,6 +31,15 @@ Advised to have an static IP for your PS5.
 1. Clone this repo
 1. Install dependencies with `pip3 install -r requirements.txt`
 1. Run `python3 client.py` or `python client.py`
+
+## Docker
+1. Clone this repo, and inside the directory create a `config.ini`:
+```ini
+[settings]
+client_id = 'xxxxxx'
+ps5_ip = 'xxx.xxx.xxx'
+```
+1. Build and run the container using `docker compose up -d`
 
 ## Thanks for testing
 - Eraks
