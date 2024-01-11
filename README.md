@@ -4,8 +4,8 @@
 ![Rich Presenc example homebrew](assets/discord_example_hb.png)
 ![Rich Presenc example idle](assets/discord_example_idle.png)
 
-## What is this?
-This is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. 
+## What is it?
+PS5 RPC Client is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. 
 
 It requires [etaHEN >= 1.4b](https://github.com/LightningMods/etaHEN) to be running and have the following entry enabled in the `/data/etaHEN/config.ini`:
 ```ini
@@ -31,3 +31,8 @@ Advised to have an static IP for your PS5.
 1. Clone this repo
 1. Install dependencies with `pip3 install -r requirements.txt`
 1. Run `python3 client.py` or `python client.py`
+
+## Thanks for testing
+- Eraks
+- [EchoStretch](https://github.com/echostretch)
+- [LightningMods](https://github.com/LightningMods)
