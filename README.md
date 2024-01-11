@@ -1,6 +1,6 @@
 # PS5 Discord Rich Presence client
 
-![Rich Presenc example game](assets/discord_example_idle_game.png)
+![Rich Presenc example game](assets/discord_example_game.png)
 ![Rich Presenc example homebrew](assets/discord_example_hb.png)
 ![Rich Presenc example idle](assets/discord_example_idle.png)
 
