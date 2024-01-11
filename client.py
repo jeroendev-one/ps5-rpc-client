@@ -10,7 +10,7 @@ from time import mktime
 current_time = time.strftime('%H:%M:%S')
 
 # Default variables
-fallback_image = 'https://i.ebayimg.com/images/g/1RUAAOSwg1FgpphC/s-l1200.webp'
+fallback_image = 'https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp'
 PS5_RPC_PORT = 8000
 
 # User specific variabls
