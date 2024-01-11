@@ -11,13 +11,13 @@ It requires [etaHEN >= 1.4b](https://github.com/LightningMods/etaHEN) to be runn
 discord_rpc=1
 ```
 Advised to have an static IP for your PS5. 
-
-## Setting up Discord
+## Getting started
+## 1. Setting up Discord
 1. Go to the [Discord Developers](https://discord.com/developers) page.
 1. On the top right side click 'New Application'. Name it 'Playstation' or how ever you like.
 1. Select the application and copy the value named 'Application ID' and note it down.
 
-## Running the client
+## 2. Running the client
 
 ### Windows
 1. Download the latest exe release from the [releases](https://github.com/jeroendev-one/ps5-rpc-client/releases) page.
@@ -40,18 +40,3 @@ export DISCORD_CLIENT_ID="13432423423"
 export PS5_IP="192.168.xx.xx"
 ```
 1. Run `python3 client.py` or `python client.py`
-
-
-## Building yourself
-1. Clone or download this repo.
-1. `cd` in to the directory
-
-
-
-
-## Docker build:
-```bash
-docker build -t ps5-rpc-client .
-docker run -it --rm --name ps5-rpc-client ps5-rpc-client
-```
-
