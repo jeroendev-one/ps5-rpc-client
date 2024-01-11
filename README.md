@@ -24,22 +24,10 @@ Advised to have an static IP for your PS5.
 
 ### Windows
 1. Download the latest exe release from the [releases](https://github.com/jeroendev-one/ps5-rpc-client/releases) page.
-1. Open up Powershell (Admin)
-1. Enter the following commands:
-    ```cmd
-    setx DISCORD_CLIENT_ID "<application id from Discord developers page>
-    setx PS5_IP "192.168.xx.xx"
-    ```
-1. After this, close the Powershell window.
-1. Unzip the release zip file
-1. Run the exe file, profit!
+1. Unzip the directory to a location of your choice.
+1. Run the exe.
 
 ## Linux / MacOS
 1. Clone this repo
-1. Install dependencies with `pip install -r requirements.txt`
-1. Set the environment variables:
-```bash
-export DISCORD_CLIENT_ID="13432423423"
-export PS5_IP="192.168.xx.xx"
-```
+1. Install dependencies with `pip3 install -r requirements.txt`
 1. Run `python3 client.py` or `python client.py`
