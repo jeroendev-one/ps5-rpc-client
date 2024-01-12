@@ -84,18 +84,35 @@ def load_game_info():
 
 # Function to get game info from the API
 def get_game_info(data, normalized_data):
-    params = {'titleid': data}
+    params = {}
     if 'CUSA' in normalized_data:
         baseurl = 'https://orbispatches.com/api/lookup'
+        type = 'Retail'
+
     elif 'PPSA' in normalized_data:
         baseurl = 'https://prosperopatches.com/api/lookup'
-    else:
-        return normalized_data, None # No baseurl defined, return recieved value for gameName and non gameImage
+        type = 'Retail'
+        
+    elif len(normalized_data) == 9:
+        baseurl = f'https://api.pkg-zone.com/pkg/cusa/{data}'
+        type = 'Homebrew'
 
-    response = requests.get(baseurl, params=params)
-    response_json = response.json()
-    gameName = response_json['metadata']['name']
-    gameImage = response_json['metadata']['icon']
+    else:
+        return normalized_data, None # You should never end up here, but if you do you're screwed
+
+    if type == 'Retail':
+        params = {'titleid': data}
+        response = requests.get(baseurl, params=params)
+        response_json = response.json()
+        gameName = response_json['metadata']['name']
+        gameImage = response_json['metadata']['icon']
+
+    elif type == 'Homebrew':
+        headers = {'User-Agent': 'StoreHAX'}
+        response = requests.get(baseurl, headers=headers)
+        response_json = response.json()
+        gameName = response_json['items'][0]['name']
+        gameImage = response_json['items'][0]['image']
 
     return gameName, gameImage
 
@@ -111,17 +128,17 @@ def connect_to_server(ip, port):
         return None
 
 # Function to set Discord activity
-def set_discord_activity(rpc_obj, gameName, gameImage, is_idle=False):
+def set_discord_activity(rpc_obj, gameName, gameImage):
     activity = {
-        "details": gameName if gameName else "Idle",
+        "details": gameName,
         "timestamps": {"start": mktime(time.localtime())},
         "assets": {
-            "large_image": gameImage if gameImage else fallback_image
+            "large_image": gameImage
         }
     }
 
     rpc_obj.set_activity(activity)
-    print(f"[{get_time()}] Updated activity{' for ' + gameName if gameName else ''}")
+    print(f"[{get_time()}] Updated activity{' for ' + gameName}")
 
 # Initialize Discord IPC client
 print(f"[{get_time()}] PS5 RPC Discord client started --\n")
@@ -167,22 +184,23 @@ while True:
             if normalized_data != previous_data:
                 previous_data = normalized_data
 
-                if not "No game running" in normalized_data:
-                    if normalized_data in game_info:
-                        print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
-                        gameName = game_info[normalized_data]['gameName']
-                        gameImage = game_info[normalized_data]['gameImage']
-                    else:
-                        gameName, gameImage = get_game_info(data, normalized_data)
+                if "No game running" in normalized_data:
+                    normalized_data = 'NO_GAME_RUNNING'
 
-                        if gameName is not None and gameImage is not None:
-                            game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage}
-                            with open('game_info.json', 'w') as file:
+                if normalized_data in game_info:
+                    print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
+                    gameName = game_info[normalized_data]['gameName']
+                    gameImage = game_info[normalized_data]['gameImage']
+                    set_discord_activity(rpc_obj, gameName, gameImage)
+                else:
+                    gameName, gameImage = get_game_info(data, normalized_data)
+
+                    if gameName is not None and gameImage is not None:
+                        game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage}
+                        with open('game_info.json', 'w') as file:
                                 json.dump(game_info, file, indent=4)
 
                     set_discord_activity(rpc_obj, gameName, gameImage)
-                else:
-                    set_discord_activity(rpc_obj, None, None, is_idle=True)
             else:
                 print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
         else:

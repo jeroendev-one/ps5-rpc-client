@@ -1,6 +1,6 @@
 {
-    "ITEM00001": {
-        "gameName": "Itemzflow Game Manager",
-        "gameImage": "https://raw.githubusercontent.com/jeroendev-one/ps5-rpc-client/master/assets/ITEM00001.png?raw=true"
+    "NO_GAME_RUNNING": {
+        "gameName": "Idle",
+        "gameImage": "https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp"
     }
 }
