@@ -38,13 +38,13 @@ jobs:
       -
         name: Build executable
         run: pyinstaller --noconfirm --clean --onefile --console --name discord-rpc-client client.py
-      -
-        name: Make release zips
-        run: |
-          Compress-Archive -Path "dist\discord-rpc-client.exe" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-exe-${{ github.ref_name }}.zip
+    #  -
+    #    name: Make release zips
+    #    run: |
+    #      Compress-Archive -Path "dist\discord-rpc-client.exe" -CompressionLevel Optimal -DestinationPath .\discord-rpc-client-exe-${{ github.ref_name }}.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@main
         with:
-          name: discord-rpc_${{ env.commit_ver }}-${{ env.commit_hash }}
+          name: discord-rpc_latest
           path: dist

@@ -165,8 +165,8 @@ def set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS):
     }
 
 
-    if BUTTONS and gameUrl:
-        print("here")
+    if BUTTONS == "1" and gameUrl:
+        # Append buttons section
         activity["buttons"] = [{"label": "View game", "url": gameUrl}]
 
     rpc_obj.set_activity(activity)
