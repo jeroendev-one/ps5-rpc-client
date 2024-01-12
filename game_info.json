@@ -2,11 +2,12 @@
     "NO_GAME_RUNNING": {
         "gameName": "Idle",
         "gameImage": "https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp",
-        "gameUrl":
+        "gameUrl": ""
     },
     "NPXS39041": {
         "gameName": "NPXS39041",
-        "gameImage": "https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp"
+        "gameImage": "https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp",
+        "gameUrl": ""
     },
     "CUSA01589": {
         "gameName": "DARK SOULS\u2122 II: Scholar of the First Sin",
