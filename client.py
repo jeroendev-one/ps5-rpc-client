@@ -93,12 +93,12 @@ def get_game_info(data, normalized_data):
         baseurl = 'https://prosperopatches.com/api/lookup'
         type = 'Retail'
         
-    elif len(normalized_data) == 9:
+    elif len(normalized_data) == 9 and 'NPXS' not in normalized_data:
         baseurl = f'https://api.pkg-zone.com/pkg/cusa/{data}'
         type = 'Homebrew'
 
     else:
-        return normalized_data, None # You should never end up here, but if you do you're screwed
+        return normalized_data, fallback_image
 
     if type == 'Retail':
         params = {'titleid': data}

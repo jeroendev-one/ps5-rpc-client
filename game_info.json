@@ -2,5 +2,17 @@
     "NO_GAME_RUNNING": {
         "gameName": "Idle",
         "gameImage": "https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp"
+    },
+    "NPXS39041": {
+        "gameName": "NPXS39041",
+        "gameImage": "https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp"
+    },
+    "CUSA33277": {
+        "gameName": "MADiSON",
+        "gameImage": false
+    },
+    "CUSA01589": {
+        "gameName": "DARK SOULS\u2122 II: Scholar of the First Sin",
+        "gameImage": "https://cdn.orbispatches.com/titles/CUSA01589_804afbb6b0ea714ded8990ccf827df2c70dc227c7415dbae73ad03f83d0b6cd8/icon0.webp"
     }
 }
