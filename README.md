@@ -1,8 +1,9 @@
 # PS5 Discord Rich Presence client
 
-![Rich Presenc example game](assets/discord_example_game.png)
-![Rich Presenc example homebrew](assets/discord_example_hb.png)
-![Rich Presenc example idle](assets/discord_example_idle.png)
+![Rich Presence example game with button](assets/discord_example_buttons.png)
+![Rich Presence example game](assets/discord_example_game.png)
+![Rich Presence example homebrew](assets/discord_example_hb.png)
+![Rich Presence example idle](assets/discord_example_idle.png)
 
 ## What is it?
 PS5 RPC Client is an client which will update your Discord Rich Presence with the game you're playing on your jailbroken PS5. *Requires Discord Desktop App*
@@ -39,6 +40,7 @@ The client will ask for the Discord Application ID and PS5 IP address upon first
 [settings]
 client_id = 'xxxxxx'
 ps5_ip = 'xxx.xxx.xxx'
+buttons_enabled = 1 (enabled) or 0 (disabled)
 ```
 1. Build and run the container using `docker compose up -d`
 

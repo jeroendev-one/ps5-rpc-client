@@ -16,6 +16,7 @@ fallback_image = 'https://github.com/jeroendev-one/ps5-rpc-client/raw/main/asset
 PS5_RPC_PORT = 8000
 DISCORD_CLIENT_ID = None
 PS5_IP = None
+BUTTONS=0
 
 # Load config from config.ini, if not present ask for input and create the file
 def get_ini_config():
@@ -30,9 +31,11 @@ def get_ini_config():
             else:
                 DISCORD_CLIENT_ID = config['settings']['client_id']
                 PS5_IP = config['settings']['ps5_ip']
+                BUTTONS = config['settings']['buttons']
                 
     except FileNotFoundError:
         print("First setup detected!")
+
         DISCORD_CLIENT_ID = input("Enter Discord Application ID: ")
         while not DISCORD_CLIENT_ID.strip():
             print("Please enter a non-empty value.")
@@ -43,15 +46,23 @@ def get_ini_config():
             print("Please enter a non-empty value.")
             PS5_IP = input("Enter PS5 IP address: ")
 
+        BUTTONS = input("Do you want buttons enabled? (yes/no): ").lower()
+        while BUTTONS not in ['yes', 'no']:
+            print("Please enter 'yes' or 'no'.")
+            BUTTONS = input("Do you want buttons enabled? (yes/no): ").lower()
+
         config['settings'] = {'client_id': DISCORD_CLIENT_ID,
-                             'ps5_ip': PS5_IP}
+                            'ps5_ip': PS5_IP,
+                            'buttons': '1' if BUTTONS == 'yes' else '0'}
+
         with open('config.ini', 'w') as f:
             config.write(f)
 
-    return DISCORD_CLIENT_ID, PS5_IP
+
+    return DISCORD_CLIENT_ID, PS5_IP, BUTTONS
 
 # Initialize INI config parsing
-DISCORD_CLIENT_ID, PS5_IP = get_ini_config()
+DISCORD_CLIENT_ID, PS5_IP, BUTTONS = get_ini_config()
 
 # Function to get formatted timestamp
 def get_time():
@@ -85,36 +96,52 @@ def load_game_info():
 # Function to get game info from the API
 def get_game_info(data, normalized_data):
     params = {}
-    if 'CUSA' in normalized_data:
-        baseurl = 'https://orbispatches.com/api/lookup'
-        type = 'Retail'
+    gameUrl = None  # Initialize gameUrl to None
 
+    if 'CUSA' in normalized_data:
+        baseUrl = 'https://orbispatches.com/api/lookup'
+        gameUrl = f'https://orbispatches.com/{data}'
+        type = 'Retail'
+        
     elif 'PPSA' in normalized_data:
-        baseurl = 'https://prosperopatches.com/api/lookup'
+        baseUrl = 'https://prosperopatches.com/api/lookup'
         type = 'Retail'
         
     elif len(normalized_data) == 9 and 'NPXS' not in normalized_data:
-        baseurl = f'https://api.pkg-zone.com/pkg/cusa/{data}'
+        baseUrl = f'https://api.pkg-zone.com/pkg/cusa/{data}'
+        gameUrl = f'https://pkg-zone.com/detail/{data}'
         type = 'Homebrew'
-
+        
     else:
-        return normalized_data, fallback_image
+        return normalized_data, fallback_image, gameUrl
 
-    if type == 'Retail':
-        params = {'titleid': data}
-        response = requests.get(baseurl, params=params)
-        response_json = response.json()
-        gameName = response_json['metadata']['name']
-        gameImage = response_json['metadata']['icon']
+    try:
+        if type == 'Retail':
+            params = {'titleid': data}
+            response = requests.get(baseUrl, params=params)
+            response.raise_for_status()  # Raise an HTTPError
+            response_json = response.json()
+            gameName = response_json['metadata']['name']
+            gameImage = response_json['metadata']['icon']
 
-    elif type == 'Homebrew':
-        headers = {'User-Agent': 'StoreHAX'}
-        response = requests.get(baseurl, headers=headers)
-        response_json = response.json()
-        gameName = response_json['items'][0]['name']
-        gameImage = response_json['items'][0]['image']
+        elif type == 'Homebrew':
+            headers = {'User-Agent': 'StoreHAX'}
+            response = requests.get(baseUrl, headers=headers)
+            response.raise_for_status()  # Raise an HTTPError
+            response_json = response.json()
+            gameName = response_json['items'][0]['name']
+            gameImage = response_json['items'][0]['image']
 
-    return gameName, gameImage
+        return gameName, gameImage, gameUrl
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+        print("Falling back to default")
+        gameName = normalized_data
+        gameImage = fallback_image
+        gameUrl = ''
+        
+    return gameName, gameImage, gameUrl
 
 
 # Function to connect to the etaHEN TCP server
@@ -128,14 +155,19 @@ def connect_to_server(ip, port):
         return None
 
 # Function to set Discord activity
-def set_discord_activity(rpc_obj, gameName, gameImage):
+def set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS):
     activity = {
         "details": gameName,
         "timestamps": {"start": mktime(time.localtime())},
         "assets": {
             "large_image": gameImage
-        }
+        },
     }
+
+
+    if BUTTONS and gameUrl:
+        print("here")
+        activity["buttons"] = [{"label": "View game", "url": gameUrl}]
 
     rpc_obj.set_activity(activity)
     print(f"[{get_time()}] Updated activity{' for ' + gameName}")
@@ -189,18 +221,23 @@ while True:
 
                 if normalized_data in game_info:
                     print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
+                    gameUrl = game_info[normalized_data]['gameUrl']
+
+                    if not gameUrl:
+                        BUTTONS=0
+                    
                     gameName = game_info[normalized_data]['gameName']
                     gameImage = game_info[normalized_data]['gameImage']
-                    set_discord_activity(rpc_obj, gameName, gameImage)
+                    set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS)
                 else:
-                    gameName, gameImage = get_game_info(data, normalized_data)
+                    gameName, gameImage, gameUrl = get_game_info(data, normalized_data)
 
-                    if gameName is not None and gameImage is not None:
-                        game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage}
+                    if gameName is not None and gameImage is not None and gameUrl is not None:
+                        game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage, 'gameUrl': gameUrl}
                         with open('game_info.json', 'w') as file:
                                 json.dump(game_info, file, indent=4)
 
-                    set_discord_activity(rpc_obj, gameName, gameImage)
+                    set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS)
             else:
                 print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
         else:
