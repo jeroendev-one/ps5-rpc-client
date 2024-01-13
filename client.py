@@ -11,15 +11,19 @@ import errno
 from time import mktime
 from json.decoder import JSONDecodeError
 
+# Suppress InsecureRequestWarning for the requests module
+requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+
 # Default variables
 fallback_image = 'https://github.com/jeroendev-one/ps5-rpc-client/raw/main/assets/fallback_ps5.webp'
 PS5_RPC_PORT = 8000
 DISCORD_CLIENT_ID = None
 PS5_IP = None
-BUTTONS=0
+BUTTONS=False
 
 # Load config from config.ini, if not present ask for input and create the file
 def get_ini_config():
+    global BUTTONS  # Add this line
     config = configparser.ConfigParser()
 
     try:
@@ -50,6 +54,9 @@ def get_ini_config():
         while BUTTONS not in ['yes', 'no']:
             print("Please enter 'yes' or 'no'.")
             BUTTONS = input("Do you want buttons enabled? (yes/no): ").lower()
+
+        # Convert the string 'yes' or 'no' to boolean True or False
+        BUTTONS = BUTTONS == 'yes'
 
         config['settings'] = {'client_id': DISCORD_CLIENT_ID,
                             'ps5_ip': PS5_IP,
@@ -110,6 +117,7 @@ def get_game_info(data, normalized_data):
     elif len(normalized_data) == 9 and 'NPXS' not in normalized_data:
         baseUrl = f'https://api.pkg-zone.com/pkg/cusa/{data}'
         gameUrl = f'https://pkg-zone.com/detail/{data}'
+        proxyUrl = 'http://62.210.38.117:6443/'
         type = 'Homebrew'
         
     else:
@@ -126,11 +134,12 @@ def get_game_info(data, normalized_data):
 
         elif type == 'Homebrew':
             headers = {'User-Agent': 'StoreHAX'}
-            response = requests.get(baseUrl, headers=headers)
+            response = requests.get(baseUrl, headers=headers, verify=False)
             response.raise_for_status()  # Raise an HTTPError
             response_json = response.json()
             gameName = response_json['items'][0]['name']
-            gameImage = response_json['items'][0]['image']
+            image = response_json['items'][0]['attachments'][0]['path']
+            gameImage = f'{proxyUrl}{image}'
 
         return gameName, gameImage, gameUrl
 
@@ -164,8 +173,7 @@ def set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS):
         },
     }
 
-
-    if BUTTONS == "1" and gameUrl:
+    if BUTTONS and gameUrl:
         # Append buttons section
         activity["buttons"] = [{"label": "View game", "url": gameUrl}]
 
@@ -173,7 +181,7 @@ def set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS):
     print(f"[{get_time()}] Updated activity{' for ' + gameName}")
 
 # Initialize Discord IPC client
-print(f"[{get_time()}] PS5 RPC Discord client started --\n")
+print(f"[{get_time()}] -- PS5 RPC Discord client started --\n")
 while True:
     try:
         rpc_obj = rpc.DiscordIpcClient.for_platform(DISCORD_CLIENT_ID)
@@ -204,69 +212,78 @@ ps5_socket.setblocking(0)
 # Main loop
 while True:
     try:
-        # Check if there is data to be read
-        ready_to_read, _, _ = select.select([ps5_socket.fileno()], [], [], 30)
+        # Receive data
+        data = ps5_socket.recv(1024).decode("utf-8").strip()
+        normalized_data = data.rstrip('\n')
 
-        if ready_to_read:
-            data = ps5_socket.recv(1024).decode("utf-8").strip()
-            normalized_data = data.rstrip('\n')
+        if not normalized_data:
+            count_empty_data += 1
+            time.sleep(5)
 
-            print(f"[{get_time()}] Data received: {data}\n")
+            if count_empty_data == 6:
+                print(f"[{get_time()}] No data received in the last 30 seconds. Reconnecting...\n")
+                ps5_socket.close()
+                ps5_socket = None
 
-            if normalized_data != previous_data:
-                previous_data = normalized_data
-
-                if "No game running" in normalized_data:
-                    normalized_data = 'NO_GAME_RUNNING'
-
-                if normalized_data in game_info:
-                    print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
-                    gameUrl = game_info[normalized_data]['gameUrl']
-
-                    if not gameUrl:
-                        BUTTONS=0
-                    
-                    gameName = game_info[normalized_data]['gameName']
-                    gameImage = game_info[normalized_data]['gameImage']
-                    set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS)
-                else:
-                    gameName, gameImage, gameUrl = get_game_info(data, normalized_data)
-
-                    if gameName is not None and gameImage is not None and gameUrl is not None:
-                        game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage, 'gameUrl': gameUrl}
-                        with open('game_info.json', 'w') as file:
-                                json.dump(game_info, file, indent=4)
-
-                    set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS)
-            else:
-                print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
+                # Attempt to reconnect
+                while ps5_socket is None:
+                    ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
+                    if ps5_socket is None:
+                        print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.\n")
+                        time.sleep(5)
+                count_empty_data = 0
+            continue
         else:
-            print(f"[{get_time()}] No data received in the last 30 seconds. Reconnecting...\n")
-            ps5_socket.close()
-            ps5_socket = None
+            count_empty_data = 0  # Reset the count when data is received
 
-            # Outside of the 'while True' loop, attempt to reconnect
-            while ps5_socket is None:
-                ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
-                if ps5_socket is None:
-                    print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.\n")
-                    time.sleep(5)
+        print(f"[{get_time()}] Data received: {data}\n")
+
+        if normalized_data != previous_data:
+            previous_data = normalized_data
+
+            if "No game running" in normalized_data:
+                normalized_data = 'NO_GAME_RUNNING'
+
+            if normalized_data in game_info:
+                print(f"[{get_time()}] Game found in game_info.json for data: {data}\n")
+                gameUrl = game_info[normalized_data]['gameUrl']
+
+                if not gameUrl:
+                    BUTTONS=False
+                
+                gameName = game_info[normalized_data]['gameName']
+                gameImage = game_info[normalized_data]['gameImage']
+                set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS == 1)
+            else:
+                gameName, gameImage, gameUrl = get_game_info(data, normalized_data)
+
+                if gameName is not None and gameImage is not None and gameUrl is not None:
+                    game_info[normalized_data] = {'gameName': gameName, 'gameImage': gameImage, 'gameUrl': gameUrl}
+                    with open('game_info.json', 'w') as file:
+                            json.dump(game_info, file, indent=4)
+
+                set_discord_activity(rpc_obj, gameName, gameImage, gameUrl, BUTTONS == 1)
+        else:
+            print(f"[{get_time()}] Previous data matches current. Not updating activity.\n")
 
     except socket.error as e:
-        if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
-            # No data available, continue the loop
-            continue
-        elif e.errno == errno.ECONNRESET or e.errno == errno.ENOTCONN:
-            print(f"Connection reset by peer or not connected: {e}")
-        else:
-            print(f"Socket error: {e}")
-
-        ps5_socket.close()
-        ps5_socket = None
-
-        print(f"[{get_time()}] Lost connection to the PS5, waiting for it to come back.")
-        while ps5_socket is None:
-            ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
-            if ps5_socket is None:
-                print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.")
-                time.sleep(5)
+            if e.errno == errno.ECONNRESET or e.errno == errno.ENOTCONN:
+                print(f"Connection reset by peer or not connected: {e}")
+                # Close the socket and try to reconnect immediately
+                ps5_socket.close()
+                ps5_socket = None
+                while ps5_socket is None:
+                    ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
+                    if ps5_socket is None:
+                        print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.\n")
+                        time.sleep(5)
+            else:
+                print(f"Socket error: {e}")
+                # Close the socket and try to reconnect immediately
+                ps5_socket.close()
+                ps5_socket = None
+                while ps5_socket is None:
+                    ps5_socket = connect_to_server(PS5_IP, PS5_RPC_PORT)
+                    if ps5_socket is None:
+                        print(f"[{get_time()}] PS5 RPC server still unavailable, retrying in 5 seconds.\n")
+                        time.sleep(5)

@@ -13,5 +13,15 @@
         "gameName": "DARK SOULS\u2122 II: Scholar of the First Sin",
         "gameImage": "https://cdn.orbispatches.com/titles/CUSA01589_804afbb6b0ea714ded8990ccf827df2c70dc227c7415dbae73ad03f83d0b6cd8/icon0.webp",
         "gameUrl": "https://orbispatches.com/CUSA01589"
+    },
+    "LAPY20009": {
+        "gameName": "PS4-Xplorer 2.0",
+        "gameImage": "http://62.210.38.117:6443/attachments/LAPY20009/LAPY20009_icon0.png",
+        "gameUrl": "https://pkg-zone.com/detail/LAPY20009"
+    },
+    "ITEM00001": {
+        "gameName": "Itemzflow Game Manager",
+        "gameImage": "http://62.210.38.117:6443/attachments/ITEM00001/ITEM00001_icon0.png",
+        "gameUrl": "https://pkg-zone.com/detail/ITEM00001"
     }
 }
