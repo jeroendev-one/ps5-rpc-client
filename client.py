@@ -116,7 +116,7 @@ def get_game_info(data, normalized_data):
         
     elif len(normalized_data) == 9 and 'NPXS' not in normalized_data:
         baseUrl = f'https://api.pkg-zone.com/pkg/cusa/{data}'
-        gameUrl = f'https://pkg-zone.com/detail/{data}'
+        gameUrl = f'https://pkg-zone.com/details/{data}'
         proxyUrl = 'http://62.210.38.117:6443/'
         type = 'Homebrew'
         
